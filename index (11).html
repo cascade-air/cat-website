@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cascade Air Transport — Route Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --tan: #bb9b69;
+    --sage: #a99e89;
+    --offwhite: #f0ebea;
+    --brown: #492202;
+    --forest: #16281c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--offwhite);
+    color: var(--brown);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  header {
+    background: var(--forest);
+    color: var(--offwhite);
+    border-bottom: 4px solid var(--tan);
+    padding: 20px 6vw;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .brand {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  .brand span { color: var(--tan); }
+
+  nav a {
+    color: var(--offwhite);
+    text-decoration: none;
+    font-size: 14px;
+    margin-left: 24px;
+    opacity: 0.85;
+  }
+  nav a:hover { opacity: 1; text-decoration: underline; }
+
+  .hero {
+    position: relative;
+    background: var(--forest);
+    color: var(--offwhite);
+    padding: 70px 6vw 90px;
+    overflow: hidden;
+  }
+
+  .hero-inner {
+    position: relative;
+    z-index: 2;
+    max-width: 720px;
+  }
+
+  .hero .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--tan);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .hero h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 700;
+    line-height: 1.15;
+    margin-bottom: 18px;
+  }
+
+  .hero p {
+    font-size: 17px;
+    color: var(--sage);
+    max-width: 560px;
+  }
+
+  .hero-mountains {
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: auto;
+    z-index: 1;
+    opacity: 0.9;
+  }
+
+  .board-section {
+    padding: 60px 6vw 90px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .board-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .board-heading h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 26px;
+    color: var(--brown);
+  }
+
+  .board-heading .status {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--forest);
+    background: var(--sage);
+    padding: 5px 12px;
+    border-radius: 20px;
+  }
+
+  .status.err { background: #d99a7c; }
+
+  .board {
+    background: var(--forest);
+    border-radius: 10px;
+    padding: 6px;
+    box-shadow: 0 10px 30px rgba(22, 40, 28, 0.25);
+  }
+
+  .board-row-header {
+    display: grid;
+    grid-template-columns: 110px 1fr 140px 100px;
+    padding: 12px 18px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--tan);
+  }
+
+  #board-body { display: flex; flex-direction: column; gap: 4px; }
+
+  .flap-row {
+    display: grid;
+    grid-template-columns: 110px 1fr 140px 100px;
+    align-items: center;
+    background: #1e3324;
+    border-radius: 6px;
+    padding: 14px 18px;
+    color: var(--offwhite);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 15px;
+    animation: flapIn 0.4s ease both;
+  }
+
+  .flap-row .flight-num { color: var(--tan); font-weight: 600; }
+  .flap-row .route-path { font-family: 'Inter', sans-serif; font-size: 15px; }
+  .flap-row .aircraft { color: var(--sage); }
+  .flap-row .distance { text-align: right; color: var(--sage); }
+
+  @keyframes flapIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .board-empty {
+    padding: 40px 18px;
+    text-align: center;
+    color: var(--sage);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+  }
+
+  @media (max-width: 640px) {
+    .board-row-header { display: none; }
+    .flap-row {
+      grid-template-columns: 1fr;
+      gap: 4px;
+      padding: 16px;
+    }
+    .flap-row .distance { text-align: left; }
+  }
+
+  footer {
+    background: var(--brown);
+    color: var(--offwhite);
+    text-align: center;
+    padding: 30px 6vw;
+    font-size: 13px;
+    opacity: 0.85;
+  }
+
+  footer a { color: var(--tan); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">CASCADE <span>AIR TRANSPORT</span></div>
+  <nav>
+    <a href="#board">Routes</a>
+    <a href="#">Fleet</a>
+    <a href="#">Join Us</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">QZV &middot; Route Board</div>
+    <h1>We'll get you home.</h1>
+    <p>Live routes across Washington, Oregon, Idaho, Montana, and California, pulled straight from the flight deck, no manual updates needed.</p>
+  </div>
+  <svg class="hero-mountains" viewBox="0 0 1440 180" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="0,180 0,110 180,40 320,100 480,20 650,90 800,50 980,120 1150,60 1300,100 1440,70 1440,180" fill="#492202" opacity="0.6"/>
+    <polygon points="0,180 0,140 220,90 400,150 600,80 780,140 960,90 1150,150 1300,110 1440,140 1440,180" fill="#f0ebea"/>
+  </svg>
+</section>
+
+<section class="board-section" id="board">
+  <div class="board-heading">
+    <h2>Current Routes</h2>
+    <span class="status" id="board-status">Loading&hellip;</span>
+  </div>
+
+  <div class="board">
+    <div class="board-row-header">
+      <span>Flight</span>
+      <span>Route</span>
+      <span>Aircraft</span>
+      <span style="text-align:right;">Distance</span>
+    </div>
+    <div id="board-body">
+      <div class="board-empty" id="board-empty">Fetching current routes&hellip;</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Cascade Air Transport &middot; KGEG &middot; KPDX &middot; KSLC &middot; KGJT &middot; <a href="#">Join the crew</a>
+</footer>
+
+<script>
+  (function () {
+    var statusEl = document.getElementById("board-status");
+    var bodyEl = document.getElementById("board-body");
+    var emptyEl = document.getElementById("board-empty");
+
+    fetch("/api/routes")
+      .then(function (r) { return r.json(); })
+      .then(function (routes) {
+        if (!Array.isArray(routes) || routes.length === 0) {
+          emptyEl.textContent = "No routes found right now. Check back soon.";
+          statusEl.textContent = "No data";
+          statusEl.classList.add("err");
+          return;
+        }
+
+        emptyEl.remove();
+
+        routes.forEach(function (route, i) {
+          var row = document.createElement("div");
+          row.className = "flap-row";
+          row.style.animationDelay = (i * 0.03) + "s";
+          var dep = (route.departure && route.departure.icaoCode) ? route.departure.icaoCode : "?";
+          var arr = (route.arrival && route.arrival.icaoCode) ? route.arrival.icaoCode : "?";
+          var aircraft = Array.isArray(route.aircraftTypes) ? route.aircraftTypes.join(", ") : "";
+          row.innerHTML =
+            '<span class="flight-num">' + (route.flightNumber || "") + '</span>' +
+            '<span class="route-path">' + dep + ' &rarr; ' + arr + '</span>' +
+            '<span class="aircraft">' + aircraft + '</span>' +
+            '<span class="distance">' + (route.distance ? route.distance + " nm" : "") + '</span>';
+          bodyEl.appendChild(row);
+        });
+
+        statusEl.textContent = routes.length + " routes live";
+      })
+      .catch(function (err) {
+        statusEl.textContent = "Couldn't load";
+        statusEl.classList.add("err");
+        emptyEl.textContent = "Couldn't reach the route feed. Try refreshing.";
+        console.error("CAT route feed error:", err);
+      });
+  })();
+</script>
+
+</body>
+</html>
