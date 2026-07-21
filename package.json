@@ -2,5 +2,8 @@
   "name": "cascade-air-transport",
   "version": "1.0.0",
   "private": true,
-  "description": "Cascade Air Transport website and pilot tools"
+  "description": "Cascade Air Transport website and pilot tools",
+  "dependencies": {
+    "@upstash/redis": "^1.34.0"
+  }
 }
