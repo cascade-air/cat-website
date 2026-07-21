@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cascade Air Transport — Live Flight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<style>
+  :root {
+    --tan: #bb9b69;
+    --sage: #a99e89;
+    --offwhite: #f0ebea;
+    --brown: #492202;
+    --forest: #16281c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--offwhite);
+    color: var(--brown);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  header {
+    background: var(--forest);
+    color: var(--offwhite);
+    border-bottom: 4px solid var(--tan);
+    padding: 20px 6vw;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .brand {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: 0.5px;
+  }
+  .brand span { color: var(--tan); }
+
+  nav a {
+    color: var(--offwhite);
+    text-decoration: none;
+    font-size: 14px;
+    margin-left: 24px;
+    opacity: 0.85;
+  }
+  nav a:hover { opacity: 1; text-decoration: underline; }
+
+  .page-heading {
+    padding: 50px 6vw 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .page-heading .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--forest);
+    opacity: 0.6;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .page-heading h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(28px, 4vw, 42px);
+    margin-bottom: 10px;
+  }
+
+  .page-heading p {
+    color: var(--brown);
+    opacity: 0.75;
+    max-width: 600px;
+  }
+
+  .live-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 6vw 90px;
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 24px;
+  }
+
+  @media (max-width: 860px) {
+    .live-wrap { grid-template-columns: 1fr; }
+  }
+
+  .map-panel {
+    background: var(--forest);
+    border-radius: 10px;
+    padding: 8px;
+    box-shadow: 0 10px 30px rgba(22, 40, 28, 0.25);
+  }
+
+  #map {
+    height: 460px;
+    border-radius: 6px;
+    background: #1e3324;
+  }
+
+  .transcript-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .transcript-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .transcript-heading h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 20px;
+  }
+
+  .status-pill {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    background: var(--sage);
+    color: var(--forest);
+    padding: 5px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .status-pill.idle { background: #d9d2c9; }
+
+  .transcript-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 460px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  .transcript-empty {
+    background: var(--forest);
+    color: var(--sage);
+    border-radius: 10px;
+    padding: 40px 20px;
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+  }
+
+  .call-card {
+    background: #fff;
+    border: 1px solid #e0d8d2;
+    border-left: 4px solid var(--tan);
+    border-radius: 8px;
+    padding: 12px 14px;
+    animation: slideIn 0.35s ease both;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .call-card .call-meta {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--sage);
+    margin-bottom: 6px;
+  }
+
+  .call-card .call-station { color: var(--brown); font-weight: 600; }
+
+  .call-line { font-size: 14px; margin-bottom: 3px; }
+  .call-line .who { font-weight: 600; color: var(--forest); }
+
+  footer {
+    background: var(--brown);
+    color: var(--offwhite);
+    text-align: center;
+    padding: 30px 6vw;
+    font-size: 13px;
+    opacity: 0.85;
+  }
+  footer a { color: var(--tan); }
+
+  .leaflet-popup-content-wrapper {
+    background: var(--forest);
+    color: var(--offwhite);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+  }
+  .leaflet-popup-tip { background: var(--forest); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">CASCADE <span>AIR TRANSPORT</span></div>
+  <nav>
+    <a href="index.html">Routes</a>
+    <a href="live.html">Live</a>
+    <a href="#">Fleet</a>
+    <a href="#">Join Us</a>
+  </nav>
+</header>
+
+<section class="page-heading">
+  <div class="eyebrow">QZV &middot; Live Flight</div>
+  <h1>Follow the flight, one call at a time.</h1>
+  <p>Every radio exchange drops a pin where the pilot actually was when it happened, straight from the flight deck.</p>
+</section>
+
+<div class="live-wrap">
+  <div class="map-panel">
+    <div id="map"></div>
+  </div>
+
+  <div class="transcript-panel">
+    <div class="transcript-heading">
+      <h2>Radio Transcript</h2>
+      <span class="status-pill idle" id="statusPill">Checking&hellip;</span>
+    </div>
+    <div class="transcript-list" id="transcriptList">
+      <div class="transcript-empty" id="transcriptEmpty">Looking for an active flight&hellip;</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Cascade Air Transport &middot; KGEG &middot; KPDX &middot; KSLC &middot; KGJT &middot; <a href="index.html">Route Board</a>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+  (function () {
+    var map = L.map('map', { zoomControl: true }).setView([47.6199, -117.5335], 6);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+      maxZoom: 18,
+    }).addTo(map);
+
+    var markersLayer = L.layerGroup().addTo(map);
+    var lastRenderedCount = 0;
+    var statusPill = document.getElementById('statusPill');
+    var listEl = document.getElementById('transcriptList');
+    var emptyEl = document.getElementById('transcriptEmpty');
+
+    function formatTime(stamp) {
+      if (!stamp) return '';
+      try {
+        var d = new Date(stamp);
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      } catch (e) {
+        return stamp;
+      }
+    }
+
+    function render(calls) {
+      if (!Array.isArray(calls) || calls.length === 0) {
+        statusPill.textContent = 'No active flight';
+        statusPill.className = 'status-pill idle';
+        if (!document.getElementById('transcriptEmpty')) {
+          listEl.innerHTML = '<div class="transcript-empty" id="transcriptEmpty">No active flight right now. Check back once a pilot is airborne.</div>';
+        }
+        markersLayer.clearLayers();
+        lastRenderedCount = 0;
+        return;
+      }
+
+      statusPill.textContent = calls.length + ' recent call' + (calls.length === 1 ? '' : 's');
+      statusPill.className = 'status-pill';
+
+      // Only redraw if something actually changed, so the map doesn't jitter.
+      if (calls.length === lastRenderedCount) return;
+      lastRenderedCount = calls.length;
+
+      // Newest first in the transcript.
+      var ordered = calls.slice().reverse();
+      listEl.innerHTML = '';
+      ordered.forEach(function (call) {
+        var card = document.createElement('div');
+        card.className = 'call-card';
+        var lines = '';
+        if (call.outgoing_message) {
+          lines += '<div class="call-line"><span class="who">Pilot:</span> ' + call.outgoing_message + '</div>';
+        }
+        if (call.incoming_message) {
+          lines += '<div class="call-line"><span class="who">' + (call.station_name || 'ATC') + ':</span> ' + call.incoming_message + '</div>';
+        }
+        card.innerHTML =
+          '<div class="call-meta"><span class="call-station">' + (call.station_name || 'Unknown station') + '</span><span>' + formatTime(call.stamp_zulu) + ' Z</span></div>' +
+          lines;
+        listEl.appendChild(card);
+      });
+
+      // Map: pins in order, oldest to newest, connected by a line.
+      markersLayer.clearLayers();
+      var points = [];
+      calls.forEach(function (call, i) {
+        if (call.lat == null || call.lon == null) return;
+        var latlng = [call.lat, call.lon];
+        points.push(latlng);
+        var isLatest = i === calls.length - 1;
+        var marker = L.circleMarker(latlng, {
+          radius: isLatest ? 8 : 5,
+          fillColor: isLatest ? '#bb9b69' : '#a99e89',
+          color: '#f0ebea',
+          weight: 1.5,
+          fillOpacity: 0.9,
+        }).addTo(markersLayer);
+        marker.bindPopup(
+          '<strong>' + (call.station_name || 'Unknown station') + '</strong><br>' + formatTime(call.stamp_zulu) + ' Z'
+        );
+      });
+
+      if (points.length > 1) {
+        L.polyline(points, { color: '#bb9b69', weight: 2, opacity: 0.6, dashArray: '4 6' }).addTo(markersLayer);
+      }
+      if (points.length > 0) {
+        map.fitBounds(points, { padding: [30, 30], maxZoom: 10 });
+      }
+    }
+
+    function poll() {
+      fetch('/api/live-feed')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          render(Array.isArray(data) ? data : []);
+        })
+        .catch(function () {
+          statusPill.textContent = 'Feed unavailable';
+          statusPill.className = 'status-pill idle';
+        });
+    }
+
+    poll();
+    setInterval(poll, 5000);
+  })();
+</script>
+
+</body>
+</html>
